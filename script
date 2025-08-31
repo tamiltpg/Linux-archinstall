@@ -1,0 +1,54 @@
+#!/bin/bash
+set -e
+
+echo "Choose installation type:"
+echo "1) Minimal"
+echo "2) Full"
+read -rp "Enter choice: " INSTALL_TYPE
+
+echo "Do you want customization? (y/n)"
+read -rp "Enter choice: " CUSTOM
+
+if [[ "$CUSTOM" == "n" ]]; then
+    echo "[*] Running Archinstall with pre-defined config..."
+    if [[ "$INSTALL_TYPE" == "1" ]]; then
+        archinstall --config minimal.json --silent
+    else
+        archinstall --config full.json --silent
+    fi
+
+    echo "Enter chroot after install? (y/n)"
+    read -rp "> " CHROOT
+
+    if [[ "$CHROOT" == "y" ]]; then
+        arch-chroot /mnt /bin/bash -c "
+            # commands here
+            pacman -Syu --noconfirm
+        "
+    fi
+
+    reboot
+
+else
+    echo "Choose customization mode:"
+    echo "0) Archinstall"
+    echo "1) Manual"
+    read -rp "> " MODE
+
+    if [[ "$MODE" == "0" ]]; then
+        archinstall
+    else
+        echo "Choose predefined config:"
+        echo "0) Caelestia-dots"
+        echo "1) Other dot file config"
+        echo "2) Other config"
+        read -rp "> " DOTS
+
+        case $DOTS in
+            0) git clone https://github.com/you/caelestia-dots /mnt/etc/skel ;;
+            1) git clone https://github.com/you/other-dots /mnt/etc/skel ;;
+            2) git clone https://github.com/you/another-config /mnt/etc/skel ;;
+        esac
+    fi
+fi
+
